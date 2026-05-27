@@ -94,7 +94,7 @@ At maximum breakout (all 32 ports split to 4x25G), the switch exposes 128 logica
 
 Verify supported breakout modes (`show interfaces breakout`) and the `hwsku` port configuration before planning cable layouts.
 
-> For a general explanation of breakout mechanics, constraints, and cabling, see [SerDes and Lanes — Port Breakout](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/02_README_serdes.md#port-breakout)
+> For a general explanation of breakout mechanics, constraints, and cabling, see [SerDes and Lanes — Ports and Breakout](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/02_README_serdes.md#ports-and-breakout)
 
 ### FEC Configuration
 
