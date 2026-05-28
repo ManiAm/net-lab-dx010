@@ -69,7 +69,6 @@ Most fan controllers use an 8-bit PWM register (values 0–255). Converting a pe
 
 The relationship between duty cycle and fan speed is approximately linear once the motor exceeds its startup threshold. At very low duty cycles, the motor lacks sufficient torque to overcome bearing friction and remains stationary. Once past this threshold, RPM increases proportionally with duty cycle up to the maximum rated speed.
 
-Thermal management algorithms exploit this predictable relationship to dynamically match fan speed to measured temperatures.
 
 ## Tachometer
 

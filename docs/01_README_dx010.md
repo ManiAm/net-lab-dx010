@@ -6,20 +6,20 @@ The Celestica Seastone DX010 is a 1U top-of-rack (ToR) data center switch with 3
 
 The DX010 belongs to the 100G generation of data center switches. Each of its 32 front-panel ports operates at 100 Gb/s using QSFP28 transceivers, and the ASIC supports flexible breakout configurations down to 25G or 10G per lane. This makes it suitable for both leaf-layer (server-facing) and spine-layer (aggregation) roles in spine–leaf data center fabrics.
 
-| Attribute             | Value                                          |
-| --------------------- | ---------------------------------------------- |
-| Vendor                | Celestica                                      |
-| Model                 | Seastone DX010                                 |
-| Form Factor           | 1U rack-mount                                  |
-| Switching ASIC        | Broadcom BCM56960 (Tomahawk I)                 |
-| Front-Panel Ports     | 32x QSFP28 (100G each)                         |
-| Total Throughput      | 3.2 Tbps                                       |
-| Management CPU        | Intel Atom C2000 (Rangeley)                    |
-| RAM                   | 4 GB DDR3 SODIMM (expandable)                  |
-| Storage               | mSATA SSD                                      |
-| Power Supplies        | 2x 800W Delta (redundant, hot-swappable)       |
-| Cooling               | 5x hot-swappable fan modules, front-to-rear    |
-| Software              | ONIE, SONiC, ONL                               |
+| Attribute             | Value                                             |
+| --------------------- | ------------------------------------------------- |
+| Vendor                | Celestica                                         |
+| Model                 | Seastone DX010                                    |
+| Form Factor           | 1U rack-mount                                     |
+| Switching ASIC        | Broadcom BCM56960 (Tomahawk I)                    |
+| Front-Panel Ports     | 32x QSFP28 (100G each)                            |
+| Total Throughput      | 3.2 Tbps                                          |
+| Management CPU        | Intel Atom C2000 (Rangeley), dual-core, 1.7 GHz   |
+| RAM                   | 4 GB DDR3L-1600 ECC SO-DIMM (expandable to 16 GB) |
+| Storage               | mSATA SSD                                         |
+| Power Supplies        | 2x 800W Delta (redundant, hot-swappable)          |
+| Cooling               | 5x hot-swappable fan modules, front-to-rear       |
+| Software              | ONIE, SONiC, ONL                                  |
 
 ## Physical Layout
 
@@ -78,7 +78,7 @@ The BCM56960 contains exactly 128 SerDes lanes at 25 Gb/s each (NRZ signaling). 
 
 ### Port Breakout
 
-The DX010's 32 ports are all 100G QSFP28. Each port macro has 4 lanes at 25G NRZ. The BCM56960 supports the following breakout modes per cage:
+Each 4-lane port macro supports the following breakout modes:
 
 | Breakout Mode | Logical Ports | Lanes per Logical Port | Speed per Logical Port |
 | ------------- | ------------- | ---------------------- | ---------------------- |
@@ -91,8 +91,6 @@ The DX010's 32 ports are all 100G QSFP28. Each port macro has 4 lanes at 25G NRZ
 At maximum breakout (all 32 ports split to 4x25G), the switch exposes 128 logical ports at 25G each — still totaling 3.2 Tbps.
 
 **BCM56960 constraint:** Within a single port macro, all four lanes must run at the same base signaling rate (all 25G NRZ or all 10G NRZ). Mixed lane rates within one cage are not supported. Each port macro is independently configurable: port 1 can be 1x100G while port 2 is 4x25G, because they use separate Falcon SerDes cores.
-
-Verify supported breakout modes (`show interfaces breakout`) and the `hwsku` port configuration before planning cable layouts.
 
 > For a general explanation of breakout mechanics, constraints, and cabling, see [SerDes and Lanes — Ports and Breakout](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/02_README_serdes.md#ports-and-breakout)
 
@@ -111,56 +109,6 @@ The BCM56960 supports two FEC modes:
 
 > For background on FEC principles, NRZ vs PAM4 requirements, and why both ends must match, see [Digital Signal Fundamentals — FEC](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/03_signal_basics.md#forward-error-correction-fec).
 
-Recommended FEC settings by cable type:
-
-| Cable / Optic Type          | Recommended FEC | Notes                                          |
-| --------------------------- | --------------- | ---------------------------------------------- |
-| Passive DAC (100G, ≤ 5m)   | RS-FEC (CL91)  | Almost always required; NICs often default to RS-FEC |
-| Active Optical Cable (AOC)  | RS-FEC (CL91)  | May link without FEC on short runs, but RS-FEC adds margin |
-| SR4 (100m multimode fiber)  | RS-FEC (CL91)  | Recommended; some work without at short distances |
-| LR4 / CWDM4 (2–10 km)      | RS-FEC (CL91)  | Required for reliable operation over distance   |
-
-FEC mode is configured per-port in SONiC via `config interface fec <interface> <mode>` or directly in the config DB. When troubleshooting a link that won't come up, verifying FEC match on both ends should be the first step after confirming the cable is seated.
-
-### SONiC Interface Naming and Lane Mapping
-
-The `show interfaces status` command in SONiC reveals how the 128 SerDes lanes are distributed across the 32 physical ports:
-
-```text
-admin@sonic:~$ show interfaces status
-  Interface            Lanes    Speed    MTU    FEC    Alias    Vlan    Oper    Admin    Type    Asym PFC
------------  ---------------  -------  -----  -----  -------  ------  ------  -------  ------  ----------
-  Ethernet0      65,66,67,68     100G   9100     rs     Eth1  routed    down       up     N/A         off
-  Ethernet4      69,70,71,72     100G   9100     rs     Eth2  routed    down       up     N/A         off
-  Ethernet8      73,74,75,76     100G   9100     rs     Eth3  routed    down       up     N/A         off
- Ethernet12      77,78,79,80     100G   9100     rs     Eth4  routed    down       up     N/A         off
- Ethernet16      33,34,35,36     100G   9100     rs     Eth5  routed    down       up     N/A         off
-...
-Ethernet108      29,30,31,32     100G   9100     rs    Eth28  routed    down       up     N/A         off
-Ethernet112  113,114,115,116     100G   9100     rs    Eth29  routed    down       up     N/A         off
-Ethernet116  117,118,119,120     100G   9100     rs    Eth30  routed    down       up     N/A         off
-Ethernet120  121,122,123,124     100G   9100     rs    Eth31  routed    down       up     N/A         off
-Ethernet124  125,126,127,128     100G   9100     rs    Eth32  routed    down       up     N/A         off
-```
-
-**Key columns explained:**
-
-| Column      | Meaning                                                                                                         |
-| ----------- | --------------------------------------------------------------------------------------------------------------- |
-| Interface   | SONiC's internal name. Numbered as `Ethernet<N>` where N increments by 4 (the lane count per port macro). Ethernet0 is the first port, Ethernet4 the second, Ethernet8 the third, etc. |
-| Lanes       | The specific SerDes lane IDs (1–128) assigned to this port. Each 100G port shows exactly 4 lanes, confirming that one physical port = one 4-lane port macro.  |
-| Speed       | The aggregate link speed — 100G here because all 4 lanes are bonded at 25G each.                                 |
-| MTU         | Maximum transmission unit in bytes. 9100 is the SONiC default (jumbo frames).                                    |
-| FEC         | Forward Error Correction mode. `rs` = Reed-Solomon (CL91), the default for 100G ports. Other values: `fc` (Firecode/CL74, common for 25G), `none`. FEC adds redundancy bits so the receiver can correct bit errors without retransmission — essential at 25 Gbaud NRZ signaling rates. |
-| Alias       | The human-friendly front-panel label (Eth1–Eth32). This maps to the physical silkscreen on the chassis. SONiC uses `Interface` internally but displays `Alias` in some show commands for operator convenience. |
-| Vlan        | Whether the port is `routed` (L3) or assigned to a VLAN (L2). Default is routed.                                |
-| Oper/Admin  | Operational state (link detected or not) vs. administrative state (enabled or shut down by config).              |
-| Type        | Transceiver type detected in the cage (N/A means no module inserted).                                            |
-| Asym PFC    | Asymmetric Priority Flow Control — off by default; relevant for lossless RDMA configurations.                   |
-
-**Why the lane numbers are not sequential across ports:** The Lanes column shows that Ethernet0 uses lanes 65–68, Ethernet4 uses 69–72, but Ethernet16 jumps to 33–36. Lane numbering reflects the physical wiring between the ASIC die and the QSFP28 cages on the PCB, which is determined by the board layout — not by front-panel order. The `hwsku` port configuration file (`port_config.ini` or `platform.json`) defines this mapping for each platform.
-
-**The Ethernet<N> naming rule:** The number N is not arbitrary. It equals the port's *index* × the number of lanes per port macro. With 4 lanes per macro: port index 0 → Ethernet0, port index 1 → Ethernet4, port index 2 → Ethernet8, and so on up to port index 31 → Ethernet124. This convention ensures that when a port is broken out, the sub-ports slot neatly into the numbering gap (e.g., Ethernet0 broken into 4x25G becomes Ethernet0, Ethernet1, Ethernet2, Ethernet3).
 
 ### Forwarding Pipeline
 
@@ -221,8 +169,6 @@ This heat is highly concentrated in two areas of the die: the central packet-pro
 
 This section traces the physical path that serialized electrical signals take from the ASIC die to the front-panel QSFP28 cage, building on the ASIC architecture described above. For background on differential signaling, SerDes operation, and signal integrity concepts referenced here, see [Digital Signal Fundamentals](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/03_signal_basics.md) and [Link Equalization and Training](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/04_signal_training.md).
 
-Sources: the [ServeTheHome DX010 teardown](https://www.servethehome.com/inside-a-celestica-seastone-dx010-32x-100gbe-switch/) (board photos and observations), the Broadcom BCM56960 product listing (package type), and the QSFP28 MSA specification (cage electrical interface). Claims that go beyond these sources are marked explicitly.
-
 ### Step 1: SerDes Output (Inside the ASIC)
 
 After the forwarding pipeline selects an egress port, the packet data is serialized by the corresponding SerDes block into a high-speed electrical signal. Per the IEEE 802.3by standard that governs 25G Ethernet, each lane uses **differential signaling** — two complementary voltage waveforms (TX+ and TX−) that together represent one serial bitstream.
@@ -237,9 +183,10 @@ The BCM56960 uses a **Ball Grid Array (BGA)** package (confirmed by the part num
 
 From the BGA landing pads, the high-speed signals are routed across the upper PCB to the 32 QSFP28 cages on the front edge.
 
-The ServeTheHome teardown makes two relevant observations about this board:
+The [ServeTheHome](https://www.servethehome.com/inside-a-celestica-seastone-dx010-32x-100gbe-switch/) teardown makes two relevant observations about this board:
 
 1. **The ASIC sits near the center of the board**, with the QSFP28 cages arrayed along the front edge (visible in the board photos).
+
 2. **The upper PCB is unusually thick** — quote: *"The PCB this switch chip is on is very thick. If you are accustomed to most server or consumer motherboards, this is several times thicker than what you are used to. The reason is simple, it has to take 3.2Tbps of traffic from the switch chip to the QSFP28 connectors on the front of the switch."*
 
 The thickness is needed because routing 128 differential pairs (256 signal traces) at 25 Gb/s requires a multi-layer PCB with controlled impedance, ground reference planes, and crosstalk isolation between adjacent lanes. The exact layer count of the DX010's upper PCB is not publicly documented.
@@ -248,7 +195,7 @@ The thickness is needed because routing 128 differential pairs (256 signal trace
 
 A **retimer** is a chip placed mid-path between the ASIC and the front-panel cage. It receives a degraded signal, recovers the clock and data, and retransmits a clean copy. Retimers are used when the PCB trace is long enough that the signal degrades beyond the receiver's ability to sample it reliably.
 
-**Does the DX010 have retimers?** The ServeTheHome teardown of the upper PCB notes: *"The large heatsink one may first assume is for multiple ICs. Instead, it is simply there to cool the Broadcom Tomahawk chip."* No other active ICs between the ASIC and the QSFP28 cages are identified in the teardown photos or text. This is consistent with the absence of retimers, but the teardown does not explicitly confirm it. There is no public DX010 schematic to verify definitively.
+The ServeTheHome teardown of the upper PCB notes: *"The large heatsink one may first assume is for multiple ICs. Instead, it is simply there to cool the Broadcom Tomahawk chip."* No other active ICs between the ASIC and the QSFP28 cages are identified in the teardown photos or text. This is consistent with the absence of retimers, but the teardown does not explicitly confirm it. There is no public DX010 schematic to verify definitively.
 
 For context: 25G NRZ signals are more tolerant of PCB trace loss than higher-speed PAM4 signals, and the distances inside a 1U chassis are short. Both factors reduce the need for retimers in this design.
 
@@ -274,11 +221,11 @@ For details on transceiver types and their operation, see [The Pluggable Transce
   ┌──────────────────────────────────────────────────────┐
   │  Tomahawk ASIC (BCM56960)                            │
   │  ┌──────────────┐                                    │
-  │  │  SerDes       │  25G NRZ per lane                 │
-  │  │  (128 lanes)  │  4 lanes per 100G port            │
+  │  │  SerDes      │  25G NRZ per lane                  │
+  │  │  (128 lanes) │  4 lanes per 100G port             │
   │  └──────┬───────┘                                    │
   └─────────┼────────────────────────────────────────────┘
-            │  BGA solder balls (confirmed: BGA package)
+            │  BGA solder balls
   ══════════╪══════════════════════════════════════════════
   │         │         Upper PCB (Data Plane)              │
   │         │                                             │
@@ -330,12 +277,8 @@ setpci -s 00:00.0 8.w
 
 If the result is `0003`, the unit has the C0 stepping (bug fixed). Any other value indicates the affected stepping.
 
-### Memory and Storage
 
-- **RAM:** Two DDR3 ECC SO-DIMM slots; typically one is populated with 4 GB from the factory. See [Memory Upgrade](#memory-upgrade) for specifications and upgrade options.
-- **Storage:** mSATA SSD for the NOS image and configuration persistence.
-
-### Platform Management: CPLDs, No BMC
+## Platform Management: CPLDs, No BMC
 
 The DX010 does not have a Baseboard Management Controller (BMC). All platform management — fan speed control, thermal monitoring, PSU status, LED state — is handled by CPLDs on the management board, accessed over I2C from the main CPU running the NOS.
 
@@ -343,20 +286,19 @@ This means there is no independent out-of-band management processor. If the NOS 
 
 The successor platform, the Seastone2 DX030, adds an optional BMC with IPMI 2.0, Serial over LAN, NC-SI shared management port, and remote firmware upgrade — a fully independent management plane that operates regardless of NOS state.
 
-## Memory Upgrade
 
-### Factory Configuration
+## Memory
 
 From the factory, the DX010 management board is typically shipped with **one** DDR3 SO-DIMM installed and **one empty slot**. The populated module is usually a **4 GB, DDR3-1600, ECC, unbuffered** SO-DIMM (204-pin, 1.35 V, single rank). The board supports **single-bit ECC**; the CPU and BIOS expect **ECC SO-DIMM** modules, not standard laptop (non-ECC) memory.
 
-| Attribute | Typical factory value |
-| --------- | --------------------- |
+| Attribute          | Typical factory value |
+| ------------------ | --------------------- |
 | Installed capacity | **4 GB** (one module) |
-| Empty slots | **1** (second SO-DIMM socket unpopulated) |
-| Module type | **ECC, unbuffered SO-DIMM** (72-bit / ×72 organization) |
-| Speed | **DDR3-1600** (PC3-12800 / PC3L-12800E) |
-| Form factor | **204-pin SO-DIMM** |
-| Voltage | **1.35 V** (DDR3L; dual 1.35 V / 1.5 V modules are acceptable) |
+| Empty slots        | **1** (second SO-DIMM socket unpopulated) |
+| Module type        | **ECC, unbuffered SO-DIMM** (72-bit / ×72 organization) |
+| Speed              | **DDR3-1600** (PC3-12800 / PC3L-12800E) |
+| Form factor        | **204-pin SO-DIMM** |
+| Voltage            | **1.35 V** (DDR3L; dual 1.35 V / 1.5 V modules are acceptable) |
 
 Under SONiC, `free -h` on a stock unit usually reports about **3.8 GiB** total RAM. That is expected: some memory is reserved by firmware and the kernel, and the full container stack (`syncd`, `swss`, `database`, routing daemons, platform monitoring, and optional lab tools) consumes most of what remains. With only **4 GB** installed, reported utilization often sits **near 100%** even when the switch is not forwarding heavy traffic. That behavior is normal for this platform; it is not necessarily a memory leak, but it does leave little headroom for upgrades, debugging, or extra services running on-box.
 
@@ -376,7 +318,7 @@ Upgrading RAM improves stability during image upgrades, config reloads, and para
 
 The SO-DIMM sockets are on the **lower control-plane PCB** (management board), in the same area as the **mSATA SSD** and the **Intel Atom** heatsink—not on the upper Tomahawk switching board.
 
-<img src="../pics/Celestica-Seastone-DX010-RAM-and-mSATA.jpg" alt="DDR3 SO-DIMM slots and mSATA SSD on the DX010 control board" width="700">
+<img src="../pics/Celestica-Seastone-DX010-RAM-and-mSATA.jpg" alt="DDR3 SO-DIMM slots and mSATA SSD on the DX010 control board" width="500">
 
 To access the memory:
 
@@ -387,33 +329,7 @@ To access the memory:
 
 Only SO-DIMM modules belong in these sockets. The Tomahawk board has no user-serviceable system RAM.
 
-### Compatible Memory
-
-Use modules that match **all** of the following:
-
-| Requirement | Value |
-| ----------- | ----- |
-| Form factor | **SO-DIMM, 204-pin** (not 240-pin desktop DIMM) |
-| Type | **DDR3 / DDR3L** |
-| ECC | **Yes** — unbuffered **ECC SO-DIMM** |
-| Buffered | **Unbuffered** (not registered / RDIMM) |
-| Speed | **DDR3-1600** (PC3-12800 / EP3L-12800E) |
-| Capacity | **4 GB** (add second stick) or **8 GB** (replace with one module) |
-| Rank | **1Rx8** preferred for 4 GB modules; **2Rx8** is common and acceptable for 8 GB modules |
-
-**Do not install** non-ECC laptop SODIMMs (for example Crucial CT51264BF160B or Kingston KVR16LS11/4). They are the wrong organization (64-bit) for a board that expects ECC (72-bit) SO-DIMMs and may fail to POST or behave unpredictably.
-
-Example OEM-style 4 GB modules seen in the field include Netlist **NLQ517235107C-D12T** and Hynix **HMT451A7BFR8A-PB**. Equivalent retail families include Kingston **KVR16LSE11/4** and Supermicro **MEM-DR340L-HL02-ES16** (Hynix-based).
-
-### Upgrade Options
-
-| Option | Action | Total RAM | Notes |
-| ------ | ------ | --------- | ----- |
-| **A — Add second 4 GB** | Keep factory module; install matching **4 GB ECC SO-DIMM** in empty slot | **~8 GB** | Cheapest if a matching 4 GB ECC module is available; two sticks need not be the same brand if specs match |
-| **B — Single 8 GB module** | Remove factory **4 GB**; install **one 8 GB ECC SO-DIMM** in either slot; leave other slot empty | **~8 GB** | Simplest install; common when 4 GB ECC SO-DIMMs are scarce (e.g. 8 GB ECC SO-DIMM such as NEMIX **B07FTTVT9F**) |
-| **C — Two 8 GB modules** | Replace both with **8 GB ECC SO-DIMMs** | **~16 GB** | Maximum headroom; usually unnecessary for SONiC on this CPU |
-
-There is **no in-band RAM upgrade**: capacity changes only take effect after a physical module change and reboot.
+**Do not install** non-ECC laptop SODIMMs. They are the wrong organization (64-bit) for a board that expects ECC (72-bit) SO-DIMMs and may fail to POST or behave unpredictably. Example OEM-style 4 GB modules seen in the field include Netlist **NLQ517235107C-D12T** and Hynix **HMT451A7BFR8A-PB**. Equivalent retail families include Kingston **KVR16LSE11/4** and Supermicro **MEM-DR340L-HL02-ES16** (Hynix-based).
 
 ### Verification After Upgrade
 
@@ -423,6 +339,8 @@ After installing memory and booting SONiC:
 free -h
 sudo decode-dimms
 ```
+
+
 
 ## Power Supplies
 
@@ -482,19 +400,9 @@ These are AC wall-draw estimates that include PSU conversion losses (~10–15 % 
 
 The DX010 is an **open networking** switch. It ships with ONIE, which is a boot loader environment that allows operators to install any compatible NOS. The most common choices are:
 
-| NOS   | Description                                                                                          |
-| ----- | ---------------------------------------------------------------------------------------------------- |
-| SONiC | Open-source NOS originally developed by Microsoft for Azure. Supports BGP, ECMP, VXLAN, PFC, RDMA.   |
-| ONL   | Open Network Linux — a minimal Linux distribution for bare-metal switches.                           |
+| NOS   | Description                                                                   |
+| ----- | ----------------------------------------------------------------------------- |
+| SONiC | Open-source NOS originally developed by Microsoft for Azure.                  |
+| ONL   | Open Network Linux — a minimal Linux distribution for bare-metal switches.    |
 
-SONiC communicates with the Tomahawk ASIC through the **SAI (Switch Abstraction Interface)**, which provides a vendor-neutral API for programming forwarding tables, ACLs, QoS policies, and reading counters. Broadcom provides the SAI implementation for the BCM56960 as part of their SDK (OpenNSA / SDKLT).
-
-This software model means the DX010 has no vendor-locked CLI. All configuration is done through SONiC's config DB, CLI (`show`, `config`), or REST/gNMI interfaces.
-
-### SONiC Support Lifecycle
-
-Tomahawk 1 was the pioneering ASIC for SONiC development, and Broadcom's community SAI still supports it. However, active development in upstream SONiC increasingly targets Tomahawk 3, 4, and 5. Newer features (such as advanced telemetry, SRv6, or certain hardware offloads) may not be backported to the BCM56960 SAI layer. For production stability on the DX010, it is advisable to pin to a well-tested SONiC release branch (such as 202211 or 202305) rather than tracking the `master` branch, where regressions on first-generation hardware are more likely to occur unnoticed.
-
-## References
-
-- [Inside a Celestica Seastone DX010 32x 100GbE Switch — ServeTheHome](https://www.servethehome.com/inside-a-celestica-seastone-dx010-32x-100gbe-switch/) (teardown photos and analysis)
+SONiC communicates with the Tomahawk ASIC through the **SAI (Switch Abstraction Interface)**, which provides a vendor-neutral API for programming forwarding tables, ACLs, QoS policies, and reading counters. Broadcom provides the SAI implementation for the BCM56960 as part of their SDK (OpenNSA / SDKLT). This software model means the DX010 has no vendor-locked CLI. All configuration is done through SONiC's config DB, CLI (`show`, `config`), or REST/gNMI interfaces.

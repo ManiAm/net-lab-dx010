@@ -54,7 +54,9 @@ Before powering on, confirm all five fan modules are seated in the rear panel. P
 
 ### Power On
 
-There is no discrete power button on the DX010. The switch powers on automatically when AC power is applied to at least one PSU. You will hear the fans spin up immediately. During early boot, the CPLD runs a lamp test: all front-panel port LEDs briefly light green to verify they are functional, then turn off. Once SONiC finishes booting and the `ledd` daemon takes over, the LEDs reflect actual link status (green = link up, off = no link).
+There is no discrete power button on the DX010. The switch powers on automatically when AC power is applied to at least one PSU. You will hear the fans spin up immediately. During early boot, the CPLD runs a lamp test: all front-panel port LEDs briefly light green to verify they are functional, then turn off.
+
+Once SONiC finishes booting and the `ledd` daemon takes over, the LEDs reflect actual link status (green = link up, off = no link).
 
 
 
@@ -79,7 +81,7 @@ On the right side of the front panel, next to the 32 QSFP28 data ports, there ar
 
 ### Configure Terminal Settings
 
-Use the following serial parameters (from the [Celestica SONiC User Manual](https://www.celestica.com/uploadedFiles/Site/our-expertise/hardware-platform-solutions/celestica-documentation-portal/SONiC_User_Manual.pdf)):
+Use the following serial parameters:
 
 | Parameter    | Value  |
 | ------------ | ------ |
@@ -97,15 +99,17 @@ sudo picocom -b 9600 /dev/ttyS0
 
 > Use `/dev/ttyS0` for a native DB9 serial port, or `/dev/ttyUSB0` if using a USB-to-serial adapter. Run `sudo dmesg | grep tty` to identify your device.
 
-> **Baud rate note:** On the DX010, the serial console operates at **9600** baud across all tested SONiC versions (2018 through 202405). The Celestica user manual references 115200, but the actual BIOS/GRUB configuration on this platform uses 9600. If picocom connects but you see garbled output, try `-b 115200` as a fallback. You can verify the active baud rate over SSH with `sudo cat /proc/cmdline` and checking the `console=ttyS0,<baud>` parameter.
+> **Baud rate note:** On the DX010, the serial console operates at **9600** baud across all tested SONiC versions. The Celestica user manual references 115200, but the actual BIOS/GRUB configuration on this platform uses 9600. If picocom connects but you see garbled output, try `-b 115200` as a fallback. You can verify the active baud rate over SSH with `sudo cat /proc/cmdline` and checking the `console=ttyS0,<baud>` parameter.
 
 > To exit picocom, press **Ctrl+A** then **Ctrl+X**.
 
 ### Observe Boot Output
 
+The DX010 is frequently sold — especially on the secondary market — with a SONiC image already installed. If that is the case, the switch will boot directly into SONiC without requiring an ONIE install step.
+
 Once the serial connection is established and the switch is powered, you will see boot output on the terminal:
 
-1. **ONIE GRUB menu** — appears first, listing options such as the installed SONiC image, ONIE Install OS, ONIE Rescue, etc.
+1. **ONIE GRUB menu** — appears first, listing the installed SONiC image (if present), ONIE Install OS, ONIE Rescue, etc.
 2. **Linux kernel boot messages** — after the SONiC image is selected (automatically after a timeout or manually).
 3. **SONiC login prompt** — appears when the system has fully booted.
 
@@ -113,7 +117,7 @@ If the switch was already powered on before you connected the serial cable, pres
 
 ### Log In
 
-Default SONiC credentials (from the [SONiC documentation](https://github.com/sonic-net/SONiC/blob/master/doc/user-manual/SONiC-User-Manual.md) and [Celestica documentation](https://documentationportal.celestica.com/en/software/sonic/user-manual/login-username-and-password/default-login)):
+Default SONiC credentials (from the [SONiC documentation](https://github.com/sonic-net/SONiC/blob/master/doc/user-manual/SONiC-User-Manual.md)):
 
 | Field | Value |
 | ----- | ----- |
@@ -213,25 +217,26 @@ Verify:
 You should now be able to SSH to the switch from your management network.
 
 
+
 ## Step 5: SONiC Image Upgrade
 
-If the switch is running an old SONiC version, upgrade to a current release. The DX010 uses the **Broadcom** platform image.
+The DX010 uses the **Broadcom** platform image (`sonic-broadcom.bin`). If the switch is running an outdated SONiC release, upgrade to a tested branch from the table below.
 
-**Tested branches on DX010:**
+> **SONiC support lifecycle:** Tomahawk 1 was the pioneering ASIC for SONiC, and Broadcom's community SAI still supports it. However, upstream development increasingly targets Tomahawk 3, 4, and 5 — newer features (advanced telemetry, SRv6, certain hardware offloads) may not be backported to the BCM56960 SAI layer. Pin to a well-tested release branch rather than tracking `master`, where regressions on first-generation hardware are more likely to go unnoticed.
+
+### Tested Branches
 
 | Branch | Kernel | Debian | DX010 Status |
 |--------|--------|--------|--------------|
 | 202311 | 5.10   | 11 (Bullseye) | Tested and working |
-| 202405 | 6.1    | 12 (Bookworm) | Tested and working  |
+| 202405 | 6.1    | 12 (Bookworm) | Tested and working |
 | 202411 | 6.1    | 12 (Bookworm) | Expected to work (same kernel series as 202405); not yet tested |
 | 202505 | 6.12   | 13 (Trixie)   | Crashes — `dx010_cpld` driver incompatible with kernel 6.12 Fortify checks |
 | 202511 | 6.12   | 13 (Trixie)   | Crashes — same CPLD driver issue |
 
 ### Find the Image
 
-The DX010 platform identifier in SONiC is `x86_64-cel_seastone-r0`. Download the Broadcom image (`sonic-broadcom.bin`) for your target SONiC release from the [SONiC build page](https://sonic-build.azurewebsites.net/ui/sonic/Pipelines) or from Celestica support.
-
-To build SONiC from source instead of downloading a prebuilt image, see [Sonic_Build.md](Sonic_Build.md).
+The DX010 platform identifier is `x86_64-cel_seastone-r0`. Download the Broadcom image for your target release from the [SONiC build page](https://sonic-build.azurewebsites.net/ui/sonic/Pipelines) or from Celestica support.
 
 ### Transfer and Install
 
@@ -271,17 +276,56 @@ show version
 
 ## Step 6: Data Cable Connections
 
-The 32 QSFP28 ports on the front panel are the data-plane ports. They carry forwarded traffic at wire speed through the Broadcom Tomahawk ASIC. These ports are independent of the management Ethernet port.
+### SONiC Interface Naming
+
+Before connecting cables, it helps to understand how SONiC names the 32 data ports. Run `show interfaces status` to see the mapping:
+
+```text
+admin@sonic:~$ show interfaces status
+  Interface            Lanes    Speed    MTU    FEC    Alias    Vlan    Oper    Admin    Type    Asym PFC
+-----------  ---------------  -------  -----  -----  -------  ------  ------  -------  ------  ----------
+  Ethernet0      65,66,67,68     100G   9100     rs     Eth1  routed    down       up     N/A         off
+  Ethernet4      69,70,71,72     100G   9100     rs     Eth2  routed    down       up     N/A         off
+  Ethernet8      73,74,75,76     100G   9100     rs     Eth3  routed    down       up     N/A         off
+ Ethernet12      77,78,79,80     100G   9100     rs     Eth4  routed    down       up     N/A         off
+ Ethernet16      33,34,35,36     100G   9100     rs     Eth5  routed    down       up     N/A         off
+...
+Ethernet108      29,30,31,32     100G   9100     rs    Eth28  routed    down       up     N/A         off
+Ethernet112  113,114,115,116     100G   9100     rs    Eth29  routed    down       up     N/A         off
+Ethernet116  117,118,119,120     100G   9100     rs    Eth30  routed    down       up     N/A         off
+Ethernet120  121,122,123,124     100G   9100     rs    Eth31  routed    down       up     N/A         off
+Ethernet124  125,126,127,128     100G   9100     rs    Eth32  routed    down       up     N/A         off
+```
+
+| Column      | Meaning                                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------------------------- |
+| Interface   | SONiC's internal name. `Ethernet<N>` where N increments by 4 (the lane count per port macro). Ethernet0 is the first port, Ethernet4 the second, etc. |
+| Lanes       | SerDes lane IDs (1–128) assigned to this port. Each 100G port uses exactly 4 lanes (one 4-lane port macro). |
+| Speed       | Aggregate link speed — 100G when all 4 lanes are bonded at 25G each. |
+| MTU         | Maximum transmission unit in bytes. 9100 is the SONiC default (jumbo frames). |
+| FEC         | Forward Error Correction mode. `rs` = Reed-Solomon (CL91), the 100G default. Other values: `fc` (Firecode/CL74, common for 25G), `none`. |
+| Alias       | Front-panel label (Eth1–Eth32), matching the chassis silkscreen. |
+| Vlan        | `routed` (L3) or a VLAN ID (L2). Default is routed. |
+| Oper/Admin  | Operational state (link detected or not) vs. administrative state (enabled or shut down by config). |
+| Type        | Transceiver type detected in the cage (N/A = no module inserted). |
+| Asym PFC    | Asymmetric Priority Flow Control — off by default; relevant for lossless RDMA. |
+
+**Why lane numbers are not sequential across ports:** Ethernet0 uses lanes 65–68, but Ethernet16 jumps to 33–36. Lane numbering reflects the physical wiring between the ASIC die and the QSFP28 cages, determined by the board layout — not front-panel order. The `hwsku` port configuration file (`port_config.ini` or `platform.json`) defines this mapping.
+
+**The Ethernet\<N\> naming rule:** N = port index × lanes per port macro. With 4 lanes per macro: index 0 → Ethernet0, index 1 → Ethernet4, … index 31 → Ethernet124. This convention reserves gaps for breakout sub-ports (e.g., Ethernet0 broken into 4x25G becomes Ethernet0–Ethernet3).
+
 
 ### Choose Your Cable Type
 
-| Cable Type | Use Case | Notes |
-| ---------- | -------- | ----- |
-| QSFP28 DAC (Direct Attach Copper) | Short reach, same rack (1–5 m) | Passive, no optics, lowest cost and power |
-| QSFP28 AOC (Active Optical Cable) | Medium reach (5–30 m) | Active, optical, fixed cable+optics |
-| QSFP28 optical transceiver + fiber | Long reach or structured cabling | Separate transceiver module + LC or MPO fiber patch cord |
+For a lab environment with servers in the same rack, **QSFP28 DAC cables** are the simplest and most cost-effective option. Other cable types are available for longer reaches:
 
-For a lab environment with servers in the same rack, **QSFP28 DAC cables** are the simplest and most cost-effective option. They plug directly into both the switch's QSFP28 cage and the server NIC's QSFP28 port.
+| Cable Type                           | Use Case             | Notes |
+| ------------------------------------ | -------------------- | ----- |
+| QSFP28 DAC (Direct Attach Copper)    | Same rack, 1–5 m     | Passive, no optics, lowest cost and power |
+| QSFP28 AOC (Active Optical Cable)    | Medium reach, 5–30 m | Active optical, fixed cable+optics |
+| QSFP28 SR4 transceiver + MMF         | Up to 100 m          | Separate transceiver + MPO fiber patch cord |
+| QSFP28 LR4 / CWDM4 transceiver + SMF | 2–10 km              | Separate transceiver + LC fiber patch cord |
+
 
 ### Insert Cables or Transceivers
 
@@ -289,7 +333,40 @@ For a lab environment with servers in the same rack, **QSFP28 DAC cables** are t
 
 - **For optical transceivers:** Insert the QSFP28 transceiver module into the cage first (it clicks when seated), then connect the fiber patch cord to the transceiver's LC or MPO connector.
 
-> **Single-end detection:** Each end of a DAC/AOC cable has its own EEPROM and ModPrsL (module presence) pin. Plugging just one end into the switch is enough for the CPLD to detect the module and for SONiC to read its EEPROM (vendor, part number, serial, etc.). The front-panel port LED will not light up — link requires both ends connected — but `show interfaces transceiver presence` will show `Present` and `show interfaces transceiver eeprom` will return the cable's identification data.
+
+### Example: 100G-SR4 Optical Link
+
+The following example uses two 100GBASE-SR4 transceivers and an MPO multimode fiber patch cord to connect two ports on the same DX010 — a loopback configuration useful for testing and validation.
+
+<img src="../pics/sample_config.jpg" alt="DX010 100G-SR4 connection with transceiver and MPO fiber" width="650">
+
+**Transceiver**
+
+| Attribute       | Value |
+| --------------- | ----- |
+| Vendor          | 10Gtek |
+| Standard        | 100GBASE-SR4 (IEEE 802.3bm) |
+| Form Factor     | QSFP28 |
+| Wavelength      | 850 nm (VCSEL) |
+| Fiber Type      | OM3 multimode (up to 70 m) / OM4 multimode (up to 100 m) |
+| Connector       | MPO/MTP-12 female |
+| Lanes           | 4 × 25G NRZ |
+| Power           | ~3.5 W |
+| DDM             | Yes (Digital Diagnostic Monitoring) |
+| Compatibility   | Cisco QSFP-100G-SR4-S compatible |
+
+**Fiber Patch Cord**
+
+| Attribute       | Value |
+| --------------- | ----- |
+| Vendor          | Elfcam |
+| Length          | 1 m (3.28 ft) |
+| Connector       | MPO female to MPO female |
+| Fiber Count     | 12 fibers (SR4 uses 8: 4 TX + 4 RX) |
+| Fiber Type      | OM4 multimode (50/125 µm) |
+| Polarity        | Type B (key-up to key-down) |
+| Jacket Color    | Purple (OM4 convention) |
+
 
 ### Verify Link Status
 
@@ -304,49 +381,127 @@ Each connected port should show `Oper: up` if the link is established. Example o
 ```
   Interface            Lanes    Speed    MTU    FEC    Alias    Vlan    Oper    Admin    Type    Asym PFC
 -----------  ---------------  -------  -----  -----  -------  ------  ------  -------  ------  ----------
-  Ethernet0      65,66,67,68     100G   9100    N/A     Eth1  routed      up       up    QSFP28      N/A
-  Ethernet4      69,70,71,72     100G   9100    N/A     Eth2  routed    down       up      N/A       N/A
+  ...
+ Ethernet16      33,34,35,36     100G   9100     rs     Eth5  routed      up       up     N/A         off
+  ...
+ Ethernet64     97,98,99,100     100G   9100     rs    Eth17  routed      up       up     N/A         off
 ```
 
 If a port shows `Admin: down`, bring it up:
 
 ```
-sudo config interface startup Ethernet0
+sudo config interface startup Ethernet16
 ```
+
+All 100G QSFP28 links should use **RS-FEC (CL91)**. See [FEC Configuration](01_README_dx010.md#fec-configuration) for details.
+
+If a port shows `Oper: down` despite a properly seated cable, verify that both ends use the same FEC mode. Set FEC per-port with:
+
+```
+sudo config interface fec Ethernet16 rs
+```
+
+Valid values are `rs` (Reed-Solomon CL91, the 100G default), `fc` (Firecode CL74), and `none`.
+
 
 ### Check Transceiver Information
 
-For optical transceivers, verify the module is recognized and read its diagnostic data:
+Each end of a DAC/AOC cable has its own EEPROM and `ModPrsL` (module presence) pin. Plugging just one end into the switch is enough for the CPLD to detect the module and for SONiC to read its EEPROM (vendor, part number, serial, etc.).
 
 ```
-show interfaces transceiver eeprom Ethernet0
+show interfaces transceiver presence
+show interfaces transceiver eeprom Ethernet16
 show interfaces transceiver lpmode
 ```
 
-For more detailed register-level data:
+
+
+## Step 7: Verify Forwarding
+
+Link-up (Step 6) confirms the physical and electrical layers. This step verifies that the Tomahawk ASIC is actively forwarding packets.
+
+### Check Error Counters
 
 ```
-sudo ethtool -m Ethernet0
+show interfaces counters
+show interfaces counters errors
 ```
 
+The `RX_ERR` and `TX_ERR` columns should be zero — these aggregate all receive/transmit errors including CRC (FCS) failures. A small `RX_DRP` count is normal and typically reflects control-plane frames discarded during initial link-up.
+
+To check FEC statistics per port:
+
+```
+show interfaces counters fec-stats
+```
+
+This shows the number of FEC codewords corrected and uncorrectable per port. A high corrected count indicates a marginal link; any uncorrectable count means frames are being corrupted beyond FEC recovery.
+
+The RX/TX packet counters (`RX_OK`, `TX_OK`) should be incrementing even without user traffic, because SONiC continuously generates control-plane frames (LLDP, ARP, etc.) on active ports. Non-zero `RX_ERR` indicates a signal integrity problem — reseat the transceiver or cable before proceeding.
+
+### Verify LLDP Self-Discovery
+
+With two ports on the same switch connected via fiber loopback, each port transmits LLDP frames that arrive on the other port. These frames pass through the ASIC forwarding pipeline, making LLDP a zero-configuration forwarding test.
+
+```
+show lldp table
+```
+
+Expected output — the switch discovers itself:
+
+```
+Capability codes: (R) Router, (B) Bridge, (O) Other
+LocalPort    RemoteDevice    RemotePortID       Capability    RemotePortDescr
+-----------  --------------  -----------------  ------------  -----------------
+Ethernet16   sonic           Eth17              BR            Eth17
+Ethernet64   sonic           Eth5               BR            Eth5
+eth0         SIP-T57W        44:db:d2:68:34:08  BO            WAN PORT
+eth0                         a8:a1:59:45:23:3e
+--------------------------------------------------
+Total entries displayed:  4
+```
+
+If both looped-back ports appear as LLDP neighbors, packets are successfully traversing the ASIC in both directions.
+
+### Verify ASIC Services
+
+The ASIC is managed by several SONiC containers. Confirm they are running and healthy:
+
+```
+docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "syncd|swss|database"
+```
+
+| Container  | Role |
+| ---------- | ---- |
+| syncd      | ASIC driver — synchronizes forwarding tables between the NOS and the Tomahawk hardware |
+| swss       | Switch State Service — orchagent translates high-level config into SAI calls |
+| database   | Redis instance holding the config, state, and ASIC databases |
+
+All three should show `Up` with no restart loops. If syncd is restarting, check `sudo journalctl -u syncd` and the SAI logs in `/var/log/swss/`.
+
+### Check Hardware Table Utilization
+
+Verify that the ASIC forwarding tables are populated and not exhausted:
+
+```
+crm show resources all
+```
+
+CRM (Critical Resource Monitoring) reports usage vs. available entries for routes, neighbors, ACLs, and other ASIC tables. Under normal conditions after initial setup, utilization should be low.
 
 
-## Step 7: Port Breakout
 
-Each QSFP28 port can be broken out from a single 100G interface into multiple lower-speed interfaces. This is useful when connecting to servers with SFP28 (25G) or SFP+ (10G) NICs via breakout cables.
+## Step 8: Port Breakout
 
-**Important:** The Tomahawk ASIC groups ports into blocks of four that share a Falcon SerDes core. Breaking out one port in a block may disable or constrain the other ports in that block. Before planning breakout cable layouts, review the Falcon core block restrictions in the Port Breakout and Block Restrictions section of `07_README_dx010.md`.
+To connect servers with SFP28 (25G) or SFP+ (10G) NICs, break a QSFP28 port into multiple lower-speed interfaces using a breakout cable. For the full list of supported modes and ASIC constraints, see [DX010 Hardware Reference — Port Breakout](01_README_dx010.md#port-breakout).
 
-Supported breakout modes on the DX010:
+| Breakout Mode | Breakout Cable |
+| ------------- | -------------- |
+| 2x50G         | QSFP28 → 2x QSFP28 |
+| 4x25G         | QSFP28 → 4x SFP28 |
+| 4x10G         | QSFP28 → 4x SFP+ |
 
-| Mode   | Result                    | Cable |
-| ------ | ------------------------- | ----- |
-| 1x100G | One 100GbE port (default) | QSFP28 DAC/optic |
-| 2x50G  | Two 50GbE ports           | QSFP28 breakout to 2x QSFP28 |
-| 4x25G  | Four 25GbE ports          | QSFP28 breakout to 4x SFP28 |
-| 4x10G  | Four 10GbE ports          | QSFP28 breakout to 4x SFP+ |
-
-Example — break port Eth25 (Ethernet96) into 4x 25G:
+Example — break Ethernet96 into 4x25G:
 
 ```
 sudo config interface breakout Ethernet96 4x25G[25G] -y
@@ -360,6 +515,8 @@ After reboot, four new interfaces appear (`Ethernet96`, `Ethernet97`, `Ethernet9
 sudo config interface speed Ethernet96 25000
 sudo config interface startup Ethernet96
 ```
+
+Verify the available modes for any port with `show interfaces breakout`.
 
 
 ## References
