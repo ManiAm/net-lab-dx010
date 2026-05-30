@@ -14,7 +14,7 @@ The DX010 belongs to the 100G generation of data center switches. Each of its 32
 | Switching ASIC        | Broadcom BCM56960 (Tomahawk I)                    |
 | Front-Panel Ports     | 32x QSFP28 (100G each)                            |
 | Total Throughput      | 3.2 Tbps                                          |
-| Management CPU        | Intel Atom C2000 (Rangeley), dual-core, 1.7 GHz   |
+| Management CPU        | Intel Atom C2538 (Rangeley), quad-core, 2.40 GHz  |
 | RAM                   | 4 GB DDR3L-1600 ECC SO-DIMM (expandable to 16 GB) |
 | Storage               | mSATA SSD                                         |
 | Power Supplies        | 2x 800W Delta (redundant, hot-swappable)          |
@@ -250,9 +250,9 @@ For details on transceiver types and their operation, see [The Pluggable Transce
     Fiber or Copper to remote device
 ```
 
-## Management CPU: Intel Atom C2000 (Rangeley)
+## Management CPU: Intel Atom C2538 (Rangeley)
 
-The management CPU is an Intel Atom C2000-series processor (codename Rangeley). This is a low-power x86 processor that runs the network operating system. It does not participate in packet forwarding — all data-plane switching is handled by the Tomahawk ASIC at wire speed. The CPU's role is exclusively control-plane:
+The management CPU is an Intel Atom C2538 (codename Rangeley) — a quad-core x86 processor clocked at 2.40 GHz that runs the network operating system. It does not participate in packet forwarding — all data-plane switching is handled by the Tomahawk ASIC at wire speed. The CPU's role is exclusively control-plane:
 
 - Running the NOS (SONiC, ONL, etc.)
 - Executing routing protocols (BGP, OSPF) and computing forwarding tables
@@ -362,7 +362,7 @@ The total power draw of the switch is the sum of five subsystems:
 | ---------------------- | --------------------------------------------------- | ---------------- |
 | Switching ASIC         | Broadcom BCM56960 (Tomahawk I), 28 nm, 3.2 Tbps     | 150–180 W (TDP)  |
 | Transceivers           | QSFP28 modules (per port, depends on optic type)    | 3.5–5.0 W each   |
-| Management CPU         | Intel Atom C2000 (Rangeley), dual-core              | 10–20 W          |
+| Management CPU         | Intel Atom C2538 (Rangeley), quad-core, 2.40 GHz    | 10–20 W          |
 | Cooling                | 5x high-speed fan modules                           | 15–30 W          |
 | Miscellaneous          | PCB voltage regulators, PHYs, SSD, RAM              | 5–15 W           |
 

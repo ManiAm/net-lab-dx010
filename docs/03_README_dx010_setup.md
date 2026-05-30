@@ -495,11 +495,11 @@ CRM (Critical Resource Monitoring) reports usage vs. available entries for route
 
 To connect servers with SFP28 (25G) or SFP+ (10G) NICs, break a QSFP28 port into multiple lower-speed interfaces using a breakout cable. For the full list of supported modes and ASIC constraints, see [DX010 Hardware Reference — Port Breakout](01_README_dx010.md#port-breakout).
 
-| Breakout Mode | Breakout Cable |
-| ------------- | -------------- |
+| Breakout Mode | Breakout Cable     |
+| ------------- | ------------------ |
 | 2x50G         | QSFP28 → 2x QSFP28 |
-| 4x25G         | QSFP28 → 4x SFP28 |
-| 4x10G         | QSFP28 → 4x SFP+ |
+| 4x25G         | QSFP28 → 4x SFP28  |
+| 4x10G         | QSFP28 → 4x SFP+   |
 
 Example — break Ethernet96 into 4x25G:
 
