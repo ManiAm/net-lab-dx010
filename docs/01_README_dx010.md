@@ -329,7 +329,7 @@ To access the memory:
 
 Only SO-DIMM modules belong in these sockets. The Tomahawk board has no user-serviceable system RAM.
 
-**Do not install** non-ECC laptop SODIMMs. They are the wrong organization (64-bit) for a board that expects ECC (72-bit) SO-DIMMs and may fail to POST or behave unpredictably. Example OEM-style 4 GB modules seen in the field include Netlist **NLQ517235107C-D12T** and Hynix **HMT451A7BFR8A-PB**. Equivalent retail families include Kingston **KVR16LSE11/4** and Supermicro **MEM-DR340L-HL02-ES16** (Hynix-based).
+**Do not install** non-ECC laptop SODIMMs. They are the wrong organization (64-bit) for a board that expects ECC (72-bit) SO-DIMMs and may fail to POST or behave unpredictably. A known-good upgrade module is the Kingston **KVR16LSE11/8** (8 GB, PC3-12800, ECC, unbuffered SO-DIMM).
 
 ### Verification After Upgrade
 
