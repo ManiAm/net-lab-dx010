@@ -74,7 +74,7 @@ The BCM56960 contains exactly 128 SerDes lanes at 25 Gb/s each (NRZ signaling). 
 - **4 lanes per port** — each QSFP28 port bonds 4 lanes for 100G (4 × 25G)
 - **32 port macros** — one per QSFP28 cage, each controlling 4 lanes
 
-> For background on SerDes operation, lane bonding, and port macro architecture, see [SerDes and Lanes](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/02_README_serdes.md)
+> For background on SerDes operation, lane bonding, and port macro architecture, see [SerDes and Lanes](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/03_README_serdes.md)
 
 ### Port Breakout
 
@@ -92,7 +92,7 @@ At maximum breakout (all 32 ports split to 4x25G), the switch exposes 128 logica
 
 **BCM56960 constraint:** Within a single port macro, all four lanes must run at the same base signaling rate (all 25G NRZ or all 10G NRZ). Mixed lane rates within one cage are not supported. Each port macro is independently configurable: port 1 can be 1x100G while port 2 is 4x25G, because they use separate Falcon SerDes cores.
 
-> For a general explanation of breakout mechanics, constraints, and cabling, see [SerDes and Lanes — Ports and Breakout](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/02_README_serdes.md#ports-and-breakout)
+> For a general explanation of breakout mechanics, constraints, and cabling, see [SerDes and Lanes — Ports and Breakout](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/03_README_serdes.md#ports-and-breakout)
 
 ### FEC Configuration
 
@@ -107,7 +107,7 @@ The BCM56960 supports two FEC modes:
 
 **FC-FEC (CL74)** is a simpler, older code originally designed for 10GBASE-KR. It has lower latency but weaker correction. It is occasionally used for 25G single-lane links where latency sensitivity outweighs error correction strength.
 
-> For background on FEC principles, NRZ vs PAM4 requirements, and why both ends must match, see [Digital Signal Fundamentals — FEC](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/03_signal_basics.md#forward-error-correction-fec).
+> For background on FEC principles, NRZ vs PAM4 requirements, and why both ends must match, see [Digital Signal Fundamentals — FEC](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/04_signal_basics.md#forward-error-correction-fec).
 
 
 ### Forwarding Pipeline
@@ -167,7 +167,7 @@ This heat is highly concentrated in two areas of the die: the central packet-pro
 
 ## ASIC-to-Port Signal Path
 
-This section traces the physical path that serialized electrical signals take from the ASIC die to the front-panel QSFP28 cage, building on the ASIC architecture described above. For background on differential signaling, SerDes operation, and signal integrity concepts referenced here, see [Digital Signal Fundamentals](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/03_signal_basics.md) and [Link Equalization and Training](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/04_signal_training.md).
+This section traces the physical path that serialized electrical signals take from the ASIC die to the front-panel QSFP28 cage, building on the ASIC architecture described above. For background on differential signaling, SerDes operation, and signal integrity concepts referenced here, see [Digital Signal Fundamentals](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/04_signal_basics.md) and [Link Equalization and Training](https://github.com/ManiAm/net-lab-switch-serdes/blob/master/docs/05_signal_training.md).
 
 ### Step 1: SerDes Output (Inside the ASIC)
 
